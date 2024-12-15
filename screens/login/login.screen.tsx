@@ -17,7 +17,7 @@ import axios from "axios";
 
 export default function LoginScreen() {
   const [phone_number, setphone_number] = useState("");
-  const [loading, setloading] = useState(false);
+  const [loading, setloading] = useState<boolean>(false);
   const [countryCode, setCountryCode] = useState("+880");
   const toast = useToast();
 
@@ -29,30 +29,42 @@ export default function LoginScreen() {
     } else {
       setloading(true);
       const phoneNumber = `${countryCode}${phone_number}`;
-      await axios
-        .post(`${process.env.EXPO_PUBLIC_SERVER_URI}/registration`, {
-          phone_number: phoneNumber,
-        })
-        .then((res) => {
-          setloading(false);
-          router.push({
-            pathname: "/(routes)/otp-verification",
-            params: { phoneNumber },
-          });
-        })
-        .catch((error) => {
-          console.log(error);
-          setloading(false);
-          toast.show(
-            "Something went wrong! please re check your phone number!",
-            {
-              type: "danger",
-              placement: "bottom",
-            }
-          );
+      console.log({ phoneNumber, countryCode });
+  
+      try {
+        console.log("1")
+        const response = await fetch(`${process.env.EXPO_PUBLIC_SERVER_URI}/registration`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ phone_number: phoneNumber }),
         });
+  
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+  
+        const res = await response.json();
+        setloading(false);
+        router.push({
+          pathname: "/(routes)/otp-verification",
+          params: { phoneNumber },
+        });
+      } catch (error) {
+        console.error(error);
+        setloading(false);
+        toast.show(
+          "Something went wrong! please re-check your phone number!",
+          {
+            type: "danger",
+            placement: "bottom",
+          }
+        );
+      }
     }
   };
+  
   return (
     <AuthContainer
       topSpace={windowHeight(150)}
